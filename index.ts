@@ -1,6 +1,6 @@
 import { httpServer } from "./src/http_server/index.js";
 import { WebSocketServer } from 'ws';
-import { handleRequest } from "./src/http_server/utils/index.js";
+import { handleRequest } from "./src/http_server/controllers/index.js";
 
 const HTTP_PORT = 8181;
 

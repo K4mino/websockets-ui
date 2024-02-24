@@ -17,7 +17,8 @@ type Ship = {
     },
     direction:boolean,
     length:number,
-    type:"small"|"medium"|"large"|"huge"
+    type:"small"|"medium"|"large"|"huge",
+    hits?:number
 }
 
 export type User = {
@@ -32,12 +33,23 @@ export type Socket = {
     ws:string | undefined
 }
 
-type  RoomSession = {
-    ws:WebSocket
-}
-
 export type Room = {
     roomId:string,
     roomUsers:User[],
     sessions:WebSocket[]
+}
+
+export type Cell = {
+    x:number,
+    y:number
+}
+
+export type CustomRequestWs = {
+    type: string,
+    data: {
+        x: number,
+        y: number
+        currentPlayer: string
+    },
+    id: number
 }
