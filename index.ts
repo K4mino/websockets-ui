@@ -14,6 +14,7 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function message(msg) {
     try {
+        console.log('received: %s', msg.toString());
         const request = JSON.parse(msg.toString());
         handleRequest(ws, request);
     } catch (error) {
