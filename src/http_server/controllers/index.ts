@@ -2,7 +2,7 @@ import { WebSocket } from "ws";
 import { RequestWs,Room, User,CustomRequestWs } from "../types/index";
 import crypto from "crypto";
 import { db, sockets } from "../db";
-import { attackSurroundCells, getSurroundCells, isHit } from "../utils";
+import { attackSurroundCells, getSurroundCells, isAllShipsKilled, isHit } from "../utils";
 export const handleRequest = (ws: WebSocket, request: RequestWs) => {
   switch (request.type) {
     case "reg":
@@ -63,7 +63,7 @@ function handleRegistration(ws: WebSocket, request: RequestWs) {
       socket.send(
         JSON.stringify({
           type: "update_winners",
-          data: JSON.stringify([]),
+          data: JSON.stringify(db.winners),
           id: 0,
         })
       );
@@ -99,8 +99,11 @@ function handleCreateRoom(ws: WebSocket, request: RequestWs) {
 function handleAddUserToRoom(ws: WebSocket, request: RequestWs) {
   const userId = sockets.get(ws);
   const { indexRoom } =  JSON.parse(request.data);
-  const { index, name } = db.users?.find((user) => user.index === userId);
-
+  const user = db.users?.find((user) => user.index === userId);
+  if(!user){
+    return
+  }
+  const { index, name }  = user
   const room = db.rooms.find(
     (room: { roomId: string }) => room.roomId === indexRoom
   );
@@ -135,11 +138,20 @@ function handleAddUserToRoom(ws: WebSocket, request: RequestWs) {
 
   if (room.roomUsers.length === 2) {
     handleCreateGame(room,ws);
+
+    for(const socket of sockets.keys()) {
+      socket.send(
+        JSON.stringify({
+          type: "update_room",
+          data: JSON.stringify([]),
+          id: 0,
+        })
+      );
+    }
   }
 }
 
 function handleCreateGame( room: Room,ws: WebSocket) {
-  //const userId = sockets.get(ws);
 
   for (const socket of room.sessions) {
     const userId = sockets.get(socket);
@@ -216,9 +228,9 @@ function handleStartGame(room: Room, secondUserId:string) {
 function handleTurn(ws: WebSocket, request: RequestWs | CustomRequestWs) {
   const { indexPlayer,x,y,gameId } = JSON.parse(request.data);
   const room = db.rooms.find((room) => room.roomId === gameId);
-  const opponentUser = room?.roomUsers.find(user => user.index !== indexPlayer);
+  const opponentUser = room?.roomUsers?.find(user => user.index !== indexPlayer);
   const opponentData = db.users.find(user => user.index === opponentUser?.index);
-  const hitShip =  isHit(x,y,opponentData.ships);
+  const hitShip =  isHit(x,y,opponentData?.ships!);
 
   if(hitShip){
     
@@ -226,10 +238,10 @@ function handleTurn(ws: WebSocket, request: RequestWs | CustomRequestWs) {
     if(hitShip.hits == hitShip.length){
 
       const cells = getSurroundCells(hitShip.position, hitShip.direction, hitShip.length);
+      hitShip.killed = true;
+      attackSurroundCells(cells,indexPlayer,room as Room);
 
-      attackSurroundCells(cells,indexPlayer,room);
-
-      for(const socket of room?.sessions){
+      for(const socket of room?.sessions!){
         socket.send(
           JSON.stringify({
             type: "attack",
@@ -248,7 +260,7 @@ function handleTurn(ws: WebSocket, request: RequestWs | CustomRequestWs) {
 
     }
 
-    for(const socket of room?.sessions){
+    for(const socket of room?.sessions!){
       socket.send(
         JSON.stringify({
           type: "attack",
@@ -276,7 +288,7 @@ function handleTurn(ws: WebSocket, request: RequestWs | CustomRequestWs) {
     }
   }else{
     console.log('MISS')
-    for(const socket of room?.sessions){
+    for(const socket of room?.sessions!){
       socket.send(
         JSON.stringify({
           type: "attack",
@@ -301,6 +313,32 @@ function handleTurn(ws: WebSocket, request: RequestWs | CustomRequestWs) {
           id:0
         }
       ))
+    }
+  }
+
+  if(isAllShipsKilled(opponentData?.ships!) && room){
+    const winner =db.users.find(user => user.index === indexPlayer)
+    db.winners.push(winner!);
+
+    for(const socket of room?.sessions){
+      socket.send(
+        JSON.stringify({
+          type: "finish",
+          data: JSON.stringify({
+            winPlayer:indexPlayer
+          }),
+          id: 0,
+        })
+      );
+      
+      socket.send(
+        JSON.stringify({
+          type: "update_winners",
+          data: JSON.stringify(db.winners),
+          id: 0,
+        })
+      );
+
     }
   }
 }

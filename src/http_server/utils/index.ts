@@ -1,32 +1,5 @@
 import { Cell,Room,Ship } from "../types";
 
-export const getSurroundCells = (shipPosition: { x: number, y: number }, shipDirection: boolean, shipLength: number) => {
-    const cells = [];
-
-    for (let i = -1; i <= shipLength; i++) {
-        if (shipDirection && i !== 0) {
-            cells.push({ x: shipPosition.x - 1, y: shipPosition.y + i });
-            cells.push({ x: shipPosition.x, y: shipPosition.y + i });
-            cells.push({ x: shipPosition.x + 1, y: shipPosition.y + i });
-        } 
-        
-        if(!shipDirection && i !== 0) {
-            cells.push({ x: shipPosition.x + i, y: shipPosition.y - 1 });
-            cells.push({ x: shipPosition.x + i, y: shipPosition.y });
-            cells.push({ x: shipPosition.x + i, y: shipPosition.y + 1 });
-        }
-    }
-
-    return cells.filter((cell, index, self) =>
-        index === self.findIndex((t) => (
-            t.x === cell.x && t.y === cell.y
-        ))
-    );
-}
-
-
-
-
 export const attackSurroundCells = (cells:Cell[],userId:string,room:Room) => {
     for(const cell of cells){
         for(const socket of room.sessions){
@@ -58,4 +31,40 @@ export const isHit = (x:number,y:number,ships:Ship[]) =>{
 
 
     return hitShip
+}
+
+export const isAllShipsKilled = (ships:Ship[]) => {
+    return ships.every(ship => ship.killed);
+}
+
+export const getShipCells = (shipPosition: { x: number, y: number }, shipDirection: boolean, shipLength: number): { x: number, y: number }[] => {
+    const occupiedCells = [];
+
+    if (shipDirection) { 
+        for (let i = shipPosition.y; i < shipPosition.y + shipLength; i++) {
+            occupiedCells.push({ x: shipPosition.x, y: i });
+        }
+    } else { 
+        for (let i = shipPosition.x; i < shipPosition.x + shipLength; i++) {
+            occupiedCells.push({ x: i, y: shipPosition.y });
+        }
+    }
+
+    return occupiedCells;
+};
+
+export const getSurroundCells = (shipPosition: { x: number, y: number }, shipDirection: boolean, shipLength: number): { x: number, y: number }[] => {
+    const surroundCells: { x: number, y: number }[] = [];
+    const occupiedCells = getShipCells(shipPosition, shipDirection, shipLength);
+    for (const cell of occupiedCells) {
+        for (let i = cell.x - 1; i <= cell.x + 1; i++) {
+            for (let j = cell.y - 1; j <= cell.y + 1; j++) {
+                if (!surroundCells.some(surroundCell => surroundCell.x === i && surroundCell.y === j)) {
+                    surroundCells.push({ x: i, y: j });
+                }
+            }
+        }
+    }
+   
+    return surroundCells.filter(cell => !occupiedCells.some(occupiedCell => occupiedCell.x === cell.x && occupiedCell.y === cell.y));
 }

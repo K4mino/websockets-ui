@@ -9,7 +9,10 @@ httpServer.listen(HTTP_PORT);
 
 const wss = new WebSocketServer({ port: 3000 });
 
+
+
 wss.on('connection', function connection(ws) {
+  console.log('WebSocket URL:', wss.address());
   ws.on('error', console.error);
 
   ws.on('message', function message(msg) {
@@ -22,4 +25,8 @@ wss.on('connection', function connection(ws) {
     }
   });
 
+});
+
+wss.on('close', () => {
+  console.log('WebSocket connection closed.');
 });

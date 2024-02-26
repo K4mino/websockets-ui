@@ -1,13 +1,7 @@
 import { WebSocket } from 'ws';
 export type RequestWs = {
     type: string,
-    data: {
-        indexRoom?: string,
-        name?: string,
-        index?: number,
-        error?: boolean,
-        errorText?: string
-    },
+    data: string,
     id: number
 }
 
@@ -19,7 +13,8 @@ export type Ship = {
     direction:boolean,
     length:number,
     type:"small"|"medium"|"large"|"huge",
-    hits?:number
+    hits?:number,
+    killed?:boolean
 }
 
 export type User = {
@@ -47,10 +42,6 @@ export type Cell = {
 
 export type CustomRequestWs = {
     type: string,
-    data: {
-        x: number,
-        y: number
-        currentPlayer: string
-    },
+    data:string,
     id: number
 }
