@@ -122,7 +122,7 @@ function handleAddUserToRoom(ws: WebSocket, request: RequestWs) {
   });
 
   room.sessions.push(ws)
-
+  console.log('rooms',db.rooms)
   for(const socket of sockets.keys()) {
     socket.send(
       JSON.stringify({
