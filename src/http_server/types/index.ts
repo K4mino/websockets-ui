@@ -2,6 +2,7 @@ import { WebSocket } from 'ws';
 export type RequestWs = {
     type: string,
     data: {
+        indexRoom?: string,
         name?: string,
         index?: number,
         error?: boolean,
