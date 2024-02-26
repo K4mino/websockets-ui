@@ -10,7 +10,7 @@ export type RequestWs = {
     id: number
 }
 
-type Ship = {
+export type Ship = {
     position:{
         x: number,
         y: number

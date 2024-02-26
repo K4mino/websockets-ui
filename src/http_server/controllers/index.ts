@@ -2,7 +2,7 @@ import { WebSocket } from "ws";
 import { RequestWs,Room, User,CustomRequestWs } from "../types/index";
 import crypto from "crypto";
 import { db, sockets } from "../db";
-import { attackSurroundCells, getSurroundCells } from "../utils";
+import { attackSurroundCells, getSurroundCells, isHit } from "../utils";
 export const handleRequest = (ws: WebSocket, request: RequestWs) => {
   switch (request.type) {
     case "reg":
@@ -218,7 +218,7 @@ function handleTurn(ws: WebSocket, request: RequestWs | CustomRequestWs) {
   const room = db.rooms.find((room) => room.roomId === gameId);
   const opponentUser = room?.roomUsers.find(user => user.index !== indexPlayer);
   const opponentData = db.users.find(user => user.index === opponentUser?.index);
-  const hitShip = opponentData.ships.find(ship => ship.position.x === x && ship.position.y === y);
+  const hitShip =  isHit(x,y,opponentData.ships);
 
   if(hitShip){
     
@@ -320,7 +320,7 @@ function handleRandomAttack(ws:WebSocket,request:RequestWs){
       gameId,
       x:randomXCell,
       y:randomYCell,
-      currentPlayer: indexPlayer
+      indexPlayer
     }),
     id: 0
   })
